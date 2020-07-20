@@ -106,7 +106,7 @@ def run(application, parameter, uid):
 
     try:
         user = mapping['users'][f'{uid}']
-    except Exception:
+    except KeyError:
         return 1
     print("validating")
     # Validate if user is allowed to launch the process
@@ -120,7 +120,7 @@ def run(application, parameter, uid):
         try:
             user_groups = mapping['users'][f'{uid}']['groups']
             user_gid = mapping['users'][f'{uid}']['group']
-        except Exception:
+        except KeyError:
             print("False")
             return 1
 
