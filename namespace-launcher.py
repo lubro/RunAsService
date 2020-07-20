@@ -13,6 +13,9 @@ from pydbus import SessionBus
 from pydbus.generic import signal
 
 
+# This range might be similar to the one specified in /etc/subuid.
+# The fix uid range here is for demo purpose only, in a real
+# world implementation, this has to be replaced.
 GROUP_RANGE = (1200, 100)
 
 
