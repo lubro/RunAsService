@@ -20,13 +20,16 @@ GROUP_RANGE = (1200, 100)
 
 
 def setup(pipes, target_ids):
+    # Close the pipes
     os.close(pipes[0][1])
     os.close(pipes[1][0])
 
+    # Read from the info pipe
     select.select([pipes[0][0]], [], [])
     data = json.load(os.fdopen(pipes[0][0]))
     child_pid = str(data['child-pid'])
 
+    # setup the new uidmapping
     subprocess.call([
         'newuidmap',
         child_pid,
@@ -39,22 +42,7 @@ def setup(pipes, target_ids):
         ]
     )
 
-    with open('tmp.txt', 'w') as f:
-        f.write(str([
-            'newgidmap',
-            child_pid,
-            '0',
-            str(os.getgid()),
-            '1',
-            '1000',
-            str(target_ids[1]),
-            '1',
-            str(GROUP_RANGE[0]),
-            str(GROUP_RANGE[0]),
-            str(GROUP_RANGE[1]),
-            ])
-            )
-
+    # setup the new gidmapping
     subprocess.call([
         'newgidmap',
         child_pid,
@@ -70,10 +58,12 @@ def setup(pipes, target_ids):
         ]
     )
 
+    # Write to and close the blocking pipe
     os.write(pipes[1][1], b'1')
 
 
 def launch(pipes, application, parameter):
+    # Close not required pipe ends
     os.close(pipes[0][0])
     os.close(pipes[1][1])
 
@@ -82,8 +72,16 @@ def launch(pipes, application, parameter):
         os.set_inheritable(pipes[0][1], True)
         os.set_inheritable(pipes[1][0], True)
 
+    # Expand the homedir
     homedir = os.path.expanduser('~')
 
+    # Specifiy how bubblewrap is started:
+    # --bind bindmounts the root directory
+    # --unshare-user unshares a user namespace
+    # --cap-add adds capabilities to process in namespace with uid 0
+    # --uid run the process with the uid 0(inside the ns)
+    # --userns-block-fd a pipe which blocks the execution
+    # --info-fd a info pipe which provides infos like name
     args = ['bwrap',
             'bwrap',
             '--bind', '/', '/',
@@ -104,6 +102,7 @@ def launch(pipes, application, parameter):
 
 
 def run(application, parameter, uid):
+    # Read the configuration for verification
     with open('applications-conf.json', 'r') as f:
         mapping = json.load(f)
 
@@ -129,11 +128,12 @@ def run(application, parameter, uid):
 
         print(f'{application} {parameter}')
 
-        # run bwrap
-
+        # Open the pipes
         info_pipe = os.pipe()
         blockns_pipe = os.pipe()
 
+        # For the process
+        # running as two processes from here
         pid = os.fork()
 
         parameter = [parameter]
