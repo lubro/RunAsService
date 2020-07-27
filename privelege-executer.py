@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-# Take parameters
+# Parameters:
 # launcher.py application, parameters, [:groups]
 
 import subprocess
@@ -9,9 +9,11 @@ import sys
 
 
 def run():
+    # Abort if insufficant ammount of parameters
     if len(sys.argv) < 3:
         return 1
 
+    # Read and apply parameters
     application = sys.argv[1]
     parameters = sys.argv[2]
 
