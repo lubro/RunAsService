@@ -11,6 +11,7 @@ from pydbus import SessionBus
 from pydbus.generic import signal
 
 
+# A class providing a D-Bus interface
 class RunAs():
     """
     <node>
@@ -24,14 +25,20 @@ class RunAs():
     """
 
     def Run(self, application, parameter, dbus_context):
+        # Print applicationname, parameters and dbus origin address for debugging
         print(f'{application} {parameter}')
         print(f'{dbus_context.sender}')
+
+        # Open and read the configuration file
         with open('applications-conf.json', 'r') as f:
             mapping = json.load(f)
 
+        # Use to the D-bus to get the uid of the client, sending this message
         bus = SessionBus()
         get_uid = bus.get('.DBus')
         uid = get_uid.GetConnectionUnixUser(dbus_context.sender)
+
+        # Call the namespace launcher
         subprocess.Popen([
             './namespace-launcher.py',
             application, parameter,
